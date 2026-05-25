@@ -28,9 +28,12 @@ smart_cbt6\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 smart_cbt6\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
 smart_cbt6\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_i2c.h
 smart_cbt6\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
+smart_cbt6\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
+smart_cbt6\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 smart_cbt6\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
 smart_cbt6\main.o: ../Core/Inc/adc.h
 smart_cbt6\main.o: ../Core/Inc/i2c.h
+smart_cbt6\main.o: ../Core/Inc/tim.h
 smart_cbt6\main.o: ../Core/Inc/usart.h
 smart_cbt6\main.o: ../Core/Inc/gpio.h
 smart_cbt6\main.o: D:\keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
@@ -39,3 +42,4 @@ smart_cbt6\main.o: ../Core/Inc/light.h
 smart_cbt6\main.o: ../Core/Inc/ds18b20.h
 smart_cbt6\main.o: ../Core/Inc/oled.h
 smart_cbt6\main.o: D:\keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+smart_cbt6\main.o: ../Core/Inc/dht11.h

@@ -20,6 +20,7 @@
 #include "main.h"
 #include "adc.h"
 #include "i2c.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -30,6 +31,7 @@
 #include "light.h"
 #include "ds18b20.h"
 #include "oled.h"
+#include "dht11.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -96,7 +98,11 @@ int main(void)
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_I2C1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+	
+	//温湿度初始化
+	DHT11_Init();
 	
 	//ds18b20初始化
 	//DS18B20_Init();
@@ -122,6 +128,10 @@ int main(void)
 	
 	uint32_t lightValue;  //记录光照数据
 	
+	float temp1 = 0;   //记录温度
+	uint8_t temp2 = 0;  //记录温度
+	uint8_t humi = 0;   //记录湿度
+	
 	
 	
   /* USER CODE END 2 */
@@ -134,14 +144,25 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 		
+		if(DHT11_Get(&temp1,&temp2,&humi) == 0){
+			//如果采集成功，就上传云端
+			sprintf(upload_data,"%s/sensor/Temp %.2f_%u\n",DEVICE_ID,temp1,humi);
+			HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);	
+		}
 		
-		
-		//上报温度数据 - 格式更适合AI识别
-		sprintf(upload_data,"%s/sensor/Temp %.2f\n",DEVICE_ID,  28.22);
-		HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);
+//		//上报温度数据 - 格式更适合AI识别
+//		sprintf(upload_data,"%s/sensor/Temp %.2f\n",DEVICE_ID,  28.22);
+//		HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);
 		
 		//OLED显示温度
-		OLED_ShowString(0, 3, (u8*)"Temp: 28.22 C", 12);
+		OLED_ShowString(0, 3, (u8*)"Temp:   ", 12);
+		sprintf(oled_buf, "%.2f", temp1);
+		OLED_ShowString(48, 3, (u8*)oled_buf, 12);
+		
+		//OLED显示湿度
+		OLED_ShowString(0, 4, (u8*)"Humi:   ",12);
+		sprintf(oled_buf, "%u", humi);
+		OLED_ShowString(48, 4, (u8*)oled_buf, 12);
 		
 		//获取光照值，并上传到云端
 		lightValue = Light_Get();
@@ -151,9 +172,9 @@ int main(void)
 		HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);
 		
 		//OLED显示光照
-		OLED_ShowString(0, 4, (u8*)"Light:     ", 12);
+		OLED_ShowString(0, 5, (u8*)"Light:     ", 12);
 		sprintf(oled_buf, "%u", lightValue);
-		OLED_ShowString(48, 4, (u8*)oled_buf, 12);
+		OLED_ShowString(48, 5, (u8*)oled_buf, 12);
 		
 		
 		
@@ -166,8 +187,8 @@ int main(void)
 		HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);
 		
 		//OLED显示LED1状态
-		OLED_ShowString(0, 5, (u8*)"LED1: ", 12);
-		OLED_ShowString(48, 5, (u8*)(switch_state ? "ON " : "OFF"), 12);
+		OLED_ShowString(0, 6, (u8*)"LED1:", 12);
+		OLED_ShowString(48, 6, (u8*)(switch_state ? "ON" : "OFF"), 12);
 		
 		
 		
@@ -180,8 +201,8 @@ int main(void)
 		HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);
 		
 		//OLED显示LED2状态
-		OLED_ShowString(72, 5, (u8*)"LED2: ", 12);
-		OLED_ShowString(120, 5, (u8*)(switch_state ? "ON " : "OFF"), 12);
+		OLED_ShowString(0, 7, (u8*)"LED2:", 12);
+		OLED_ShowString(48, 7, (u8*)(switch_state ? "OFF" : "ON"), 12);
 		
 		HAL_Delay(1000);
 		
