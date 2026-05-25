@@ -115,9 +115,9 @@ int main(void)
 	OLED_ShowString(0, 0, (u8*)"Smart Device", 16);
 	OLED_ShowString(0, 2, (u8*)"----------------", 12);
 	
-	//开启灯光设备1和设备2
-	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET);
+	//开启灯光设备1和设备2，LED1高电平有效，高电平时亮灯。LED2低电平有效，低电平时亮灯
+	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET);
 	
 	
 	
@@ -150,9 +150,6 @@ int main(void)
 			HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);	
 		}
 		
-//		//上报温度数据 - 格式更适合AI识别
-//		sprintf(upload_data,"%s/sensor/Temp %.2f\n",DEVICE_ID,  28.22);
-//		HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);
 		
 		//OLED显示温度
 		OLED_ShowString(0, 3, (u8*)"Temp:   ", 12);
@@ -178,7 +175,7 @@ int main(void)
 		
 		
 		
-		//获取灯光设备1LED1的状态，并上传到云端
+		//获取灯光设备1LED1的状态，并上传到云端，
 		switch_state = HAL_GPIO_ReadPin(LED1_GPIO_Port,LED1_Pin);
 		
 		//sprintf(upload_data,"%s/state/Led1 %s\n",DEVICE_ID, switch_state ? "ON" : "OFF");
@@ -188,7 +185,7 @@ int main(void)
 		
 		//OLED显示LED1状态
 		OLED_ShowString(0, 6, (u8*)"LED1:", 12);
-		OLED_ShowString(48, 6, (u8*)(switch_state ? "ON" : "OFF"), 12);
+		OLED_ShowString(48, 6, (u8*)(switch_state ? "ON " : "OFF"), 12);
 		
 		
 		
@@ -202,7 +199,7 @@ int main(void)
 		
 		//OLED显示LED2状态
 		OLED_ShowString(0, 7, (u8*)"LED2:", 12);
-		OLED_ShowString(48, 7, (u8*)(switch_state ? "OFF" : "ON"), 12);
+		OLED_ShowString(48, 7, (u8*)(switch_state ? "OFF" : "ON "), 12);
 		
 		HAL_Delay(1000);
 		
