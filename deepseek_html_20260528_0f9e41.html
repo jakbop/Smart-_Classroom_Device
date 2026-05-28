@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>智能家居控制中心 | 温馨物联</title>
-    <!-- Font Awesome 6 (免费图标库，增强温馨感) -->
+    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- MQTT.js 客户端库 (轻量级 WebSocket MQTT) -->
+    <!-- MQTT.js 客户端 -->
     <script src="https://unpkg.com/mqtt@5.3.0/dist/mqtt.min.js"></script>
     <style>
         * {
@@ -22,7 +22,6 @@
             padding: 2rem 1.5rem;
         }
 
-        /* 主容器，响应式宽度 */
         .dashboard {
             max-width: 1300px;
             margin: 0 auto;
@@ -34,7 +33,6 @@
             transition: all 0.2s ease;
         }
 
-        /* 头部区域 */
         .header {
             display: flex;
             justify-content: space-between;
@@ -108,7 +106,6 @@
             color: #9b5e2c;
         }
 
-        /* 传感器卡片网格 (响应式布局) */
         .sensors-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -116,7 +113,6 @@
             margin-bottom: 2.8rem;
         }
 
-        /* 通用卡片样式 温馨圆润 */
         .card {
             background: #ffffffdd;
             backdrop-filter: blur(4px);
@@ -182,7 +178,6 @@
             border-radius: 40px;
         }
 
-        /* 场景指令阵列区 (LED控制) */
         .control-section {
             background: #fff8ef;
             border-radius: 2rem;
@@ -235,7 +230,6 @@
             font-size: 1.2rem;
             color: #4d351c;
         }
-        /* 自定义开关 (滑动按钮) */
         .toggle-switch {
             position: relative;
             display: inline-block;
@@ -276,7 +270,7 @@
         input:checked + .slider:before {
             transform: translateX(28px);
         }
-        .led-status-badge {
+        .device-status-badge {
             margin-left: 10px;
             font-size: 0.8rem;
             background: #f0e3d4;
@@ -293,7 +287,7 @@
             border-top: 1px solid #f7e5cf;
             padding-top: 1.5rem;
         }
-        /* 移动端适配 */
+
         @media (max-width: 700px) {
             body {
                 padding: 1rem;
@@ -330,11 +324,15 @@
         i, .fas, .far {
             pointer-events: none;
         }
+        .data-wait-hint {
+            font-size: 0.7rem;
+            margin-top: 6px;
+            color: #e6a157;
+        }
     </style>
 </head>
 <body>
 <div class="dashboard">
-    <!-- 头部区域：标题 + 连接状态 -->
     <div class="header">
         <div class="title-section">
             <h1><i class="fas fa-home" style="color:#e6a157;"></i> 温馨智家</h1>
@@ -347,7 +345,7 @@
         </div>
     </div>
 
-    <!-- 传感器卡片区域: 温度+湿度 & 光照强度 -->
+    <!-- 传感器卡片区域 -->
     <div class="sensors-grid">
         <!-- 温湿度卡片 -->
         <div class="card">
@@ -382,13 +380,14 @@
         </div>
     </div>
 
-    <!-- 场景指令阵列 - LED 灯控制 -->
+    <!-- 场景指令阵列：LED灯 + 蜂鸣器 -->
     <div class="control-section">
         <div class="section-title">
             <i class="fas fa-microchip"></i>
             <span>指令阵列 · 智能执行</span>
         </div>
         <div class="device-grid">
+            <!-- LED 灯控制 -->
             <div class="device-item">
                 <div class="device-info">
                     <i class="fas fa-lightbulb"></i>
@@ -399,13 +398,26 @@
                         <input type="checkbox" id="ledToggle">
                         <span class="slider"></span>
                     </label>
-                    <span class="led-status-badge" id="ledStateText">关闭</span>
+                    <span class="device-status-badge" id="ledStateText">关闭</span>
                 </div>
             </div>
-            <!-- 未来可扩展其他指令，目前仅LED，但设计整齐 -->
+            <!-- 蜂鸣器控制 -->
+            <div class="device-item">
+                <div class="device-info">
+                    <i class="fas fa-bell"></i>
+                    <span>蜂鸣器</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="buzzerToggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="device-status-badge" id="buzzerStateText">关闭</span>
+                </div>
+            </div>
         </div>
         <p style="font-size: 0.7rem; margin-top: 1rem; color:#c28b52; text-align: right;">
-            <i class="fas fa-info-circle"></i> 控制指令实时发送至设备
+            <i class="fas fa-info-circle"></i> LED灯指令: a(开)/b(关) &nbsp;|&nbsp; 蜂鸣器指令: c(开)/d(关)
         </p>
     </div>
     <footer>
@@ -423,12 +435,12 @@
         keepalive: 60,
         username: '',
         password: '',
-        reconnectPeriod: 3000,   // 自动重连间隔
+        reconnectPeriod: 3000,
     };
     // 主题定义
-    const TOPIC_TEMP = 'wengyuanhang/sensor/Temp';      // 温度湿度
-    const TOPIC_LIGHT = 'wengyuanhang/sensor/Light';    // 光照强度
-    const TOPIC_CMD = 'wengyuanhang/cmd';               // 控制指令 LED (a开/b关)
+    const TOPIC_TEMP = 'wengyuanhang/sensor/Temp';
+    const TOPIC_LIGHT = 'wengyuanhang/sensor/Light';
+    const TOPIC_CMD = 'wengyuanhang/cmd';
 
     // DOM 元素
     const statusDot = document.getElementById('statusDot');
@@ -440,22 +452,23 @@
     const lightUpdateTimeSpan = document.getElementById('lightUpdateTime');
     const ledToggle = document.getElementById('ledToggle');
     const ledStateText = document.getElementById('ledStateText');
+    const buzzerToggle = document.getElementById('buzzerToggle');
+    const buzzerStateText = document.getElementById('buzzerStateText');
     const reconnectBtn = document.getElementById('manualReconnectBtn');
 
-    // 内部状态
     let mqttClient = null;
     let isMqttConnected = false;
+    // 设备状态
     let currentLedState = false;   // false=关, true=开
-    // 记录最后数据，用于避免界面闪烁
-    let lastTemp = null, lastHumi = null, lastLight = null;
+    let currentBuzzerState = false; // false=关, true=开
 
-    // 辅助函数: 格式化时间
+    // 辅助函数: 获取当前时间字符串
     function getCurrentTimeString() {
         const now = new Date();
         return `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
     }
 
-    // 更新UI连接状态
+    // 更新MQTT连接状态显示
     function updateConnectionStatus(status, msg) {
         statusTextSpan.innerText = msg;
         statusDot.className = 'status-dot';
@@ -463,14 +476,12 @@
             statusDot.classList.add('connected');
         } else if (status === 'connecting') {
             statusDot.classList.add('connecting');
-        } else if (status === 'disconnected') {
-            statusDot.classList.add('disconnected');
         } else {
             statusDot.classList.add('disconnected');
         }
     }
 
-    // 处理温度湿度消息 格式: "27.3_56"
+    // 处理温度湿度消息 (格式: "27.3_56")
     function handleTempMessage(payloadStr) {
         try {
             if (payloadStr && payloadStr.includes('_')) {
@@ -478,82 +489,99 @@
                 if (parts.length >= 2) {
                     const temp = parseFloat(parts[0]);
                     const humi = parseFloat(parts[1]);
-                    if (!isNaN(temp)) {
-                        lastTemp = temp.toFixed(1);
-                        tempValueSpan.innerText = lastTemp;
-                    } else {
-                        tempValueSpan.innerText = parts[0];
-                    }
-                    if (!isNaN(humi)) {
-                        lastHumi = humi.toFixed(1);
-                        humiValueSpan.innerText = lastHumi;
-                    } else {
-                        humiValueSpan.innerText = parts[1];
-                    }
+                    if (!isNaN(temp)) tempValueSpan.innerText = temp.toFixed(1);
+                    else tempValueSpan.innerText = parts[0];
+                    if (!isNaN(humi)) humiValueSpan.innerText = humi.toFixed(1);
+                    else humiValueSpan.innerText = parts[1];
                     tempUpdateTimeSpan.innerText = getCurrentTimeString();
                     return;
                 }
             }
-            // 若格式不符，尝试直接展示原始数据但不会破坏界面
-            console.warn("温度主题消息格式异常:", payloadStr);
+            // 异常降级
             if (payloadStr) {
-                // 可能是意外格式，仍然更新显示原始
                 tempValueSpan.innerText = payloadStr;
                 humiValueSpan.innerText = '?';
                 tempUpdateTimeSpan.innerText = getCurrentTimeString();
             }
-        } catch(e) { console.error("解析温度/湿度错误", e); }
+        } catch(e) { console.error("解析温度湿度错误", e); }
     }
 
-    // 处理光照强度消息 (纯整数字符串)
+    // 处理光照强度消息 (整数值)
     function handleLightMessage(payloadStr) {
         try {
             let lightVal = parseInt(payloadStr, 10);
             if (isNaN(lightVal)) {
-                // 如果不是数字直接显示字符串但做截断
                 lightValueSpan.innerText = payloadStr.substring(0, 8);
             } else {
-                lastLight = lightVal;
                 lightValueSpan.innerText = lightVal;
             }
             lightUpdateTimeSpan.innerText = getCurrentTimeString();
         } catch(e) { console.error("解析光照错误", e); lightValueSpan.innerText = 'err'; }
     }
 
-    // 发布LED控制指令
-    function publishLedCommand(state) {
+    // 通用发布指令函数 (topic, command)
+    function publishCommand(command, deviceName, onSuccessCallback, onFailCallback) {
         if (!mqttClient || !isMqttConnected) {
             console.warn("MQTT未连接，无法发送指令");
-            // 提示用户并恢复开关状态
             alert("暂未连接到智能网关，请检查网络或点击重连按钮");
-            // 恢复开关UI到之前的状态 (因为实际未发送)
-            ledToggle.checked = currentLedState;
-            ledStateText.innerText = currentLedState ? "开启" : "关闭";
+            if (onFailCallback) onFailCallback();
             return false;
         }
-        const cmd = state ? 'a' : 'b';
-        mqttClient.publish(TOPIC_CMD, cmd, { qos: 0, retain: false }, (err) => {
+        mqttClient.publish(TOPIC_CMD, command, { qos: 0, retain: false }, (err) => {
             if (err) {
-                console.error("发布指令失败", err);
-                alert("指令发送失败，请重试");
-                // 恢复界面状态
-                ledToggle.checked = !state;
-                ledStateText.innerText = !state ? "关闭" : "开启";
-                currentLedState = !state;
+                console.error(`发布指令 ${command} 失败`, err);
+                alert(`${deviceName} 指令发送失败，请重试`);
+                if (onFailCallback) onFailCallback();
             } else {
-                console.log(`指令已发送: ${cmd} (${state ? '打开LED' : '关闭LED'})`);
-                // 发送成功后状态已改变，同步currentLedState已经在调用前更新了，无需额外动作
+                console.log(`指令已发送: ${command} (${deviceName})`);
+                if (onSuccessCallback) onSuccessCallback();
             }
         });
+        return true;
     }
 
-    // LED开关切换事件
+    // LED 开关切换处理
     function onLedToggleChange(e) {
-        const newState = ledToggle.checked;  // true: 开, false: 关
-        // 更新内部标记并发布指令
+        const newState = ledToggle.checked;
+        const command = newState ? 'a' : 'b';
+        const previousState = currentLedState;
+        // 乐观更新UI，若发送失败则回滚
         currentLedState = newState;
         ledStateText.innerText = newState ? "开启" : "关闭";
-        publishLedCommand(newState);
+        
+        publishCommand(command, "LED灯", 
+            () => {
+                // 成功，状态已更新
+            },
+            () => {
+                // 失败回滚
+                currentLedState = previousState;
+                ledToggle.checked = previousState;
+                ledStateText.innerText = previousState ? "开启" : "关闭";
+            }
+        );
+    }
+
+    // 蜂鸣器开关切换处理
+    function onBuzzerToggleChange(e) {
+        const newState = buzzerToggle.checked;
+        const command = newState ? 'c' : 'd';
+        const previousState = currentBuzzerState;
+        // 乐观更新
+        currentBuzzerState = newState;
+        buzzerStateText.innerText = newState ? "开启" : "关闭";
+        
+        publishCommand(command, "蜂鸣器",
+            () => {
+                // 成功
+            },
+            () => {
+                // 失败回滚
+                currentBuzzerState = previousState;
+                buzzerToggle.checked = previousState;
+                buzzerStateText.innerText = previousState ? "开启" : "关闭";
+            }
+        );
     }
 
     // 初始化MQTT连接及订阅
@@ -580,13 +608,10 @@
                     console.log("订阅成功:", granted);
                 }
             });
-            // 连接成功后 不需要主动拉取，等待设备发布即可展示数据。
-            // 为了体现周期性数据刷新，MQTT推送会自然刷新。
         });
 
         mqttClient.on('message', (topic, message) => {
             const payload = message.toString();
-            // console.log(`收到主题: ${topic} , 消息: ${payload}`);
             if (topic === TOPIC_TEMP) {
                 handleTempMessage(payload);
             } else if (topic === TOPIC_LIGHT) {
@@ -618,10 +643,9 @@
         });
     }
 
-    // 手动重连逻辑
+    // 手动重连
     function manualReconnect() {
         if (mqttClient && isMqttConnected) {
-            // 如果已连接，先主动断开再重连
             mqttClient.end(true, () => {
                 initMqttConnection();
             });
@@ -631,27 +655,34 @@
         }
     }
 
-    // 同步UI的LED状态，防止发送不一致 (无状态反馈订阅，只依靠本地UI与上次指令的同步)
-    // 初始加载时默认为关
+    // 初始化UI及事件绑定
     function initUI() {
+        // LED 初始状态关闭
         ledToggle.checked = false;
         currentLedState = false;
         ledStateText.innerText = "关闭";
-        // 设置温湿度光照占位符
+        // 蜂鸣器初始状态关闭
+        buzzerToggle.checked = false;
+        currentBuzzerState = false;
+        buzzerStateText.innerText = "关闭";
+        
+        // 传感器占位
         tempValueSpan.innerText = '--';
         humiValueSpan.innerText = '--';
         lightValueSpan.innerText = '--';
         tempUpdateTimeSpan.innerText = '--';
         lightUpdateTimeSpan.innerText = '--';
 
-        // 绑定LED切换事件 (先移除再添加避免重复)
+        // 移除旧监听，避免重复绑定
         ledToggle.removeEventListener('change', onLedToggleChange);
         ledToggle.addEventListener('change', onLedToggleChange);
+        buzzerToggle.removeEventListener('change', onBuzzerToggleChange);
+        buzzerToggle.addEventListener('change', onBuzzerToggleChange);
         reconnectBtn.removeEventListener('click', manualReconnect);
         reconnectBtn.addEventListener('click', manualReconnect);
     }
 
-    // 额外保证页面关闭时正常断开连接
+    // 页面关闭前断开连接
     window.addEventListener('beforeunload', () => {
         if (mqttClient && isMqttConnected) {
             mqttClient.end(true);
@@ -662,41 +693,24 @@
     function startApp() {
         initUI();
         initMqttConnection();
-
-        // 可选：为提升体验，显示重连通知，并且因为题目需要“周期性获取最新传感器数据刷新”，
-        // MQTT的实时推送完全满足周期性刷新；同时因为传感器数据可能不会过于频繁，但一旦到来即更新，
-        // 符合要求。甚至用户可以通过手动刷新连接来确保订阅正常。
+        // 可选：数据等待提示（非必要，增强体验）
+        setInterval(() => {
+            if (isMqttConnected && tempUpdateTimeSpan.innerText === '--') {
+                const extraDiv = document.querySelector('.sensors-grid .card:first-child .extra-detail');
+                if (extraDiv && !extraDiv.querySelector('.data-wait-hint')) {
+                    const hint = document.createElement('div');
+                    hint.className = 'data-wait-hint';
+                    hint.innerHTML = '<i class="fas fa-hourglass-half"></i> 等待传感器数据... 请确保设备已上报';
+                    extraDiv.appendChild(hint);
+                }
+            } else {
+                const hints = document.querySelectorAll('.data-wait-hint');
+                hints.forEach(h => h.remove());
+            }
+        }, 8000);
     }
 
     startApp();
-
-    // 另外，增加友好提示，如果长时间未收到数据，可显示等待数据信息 (非必须，但增加亲和力)
-    // 设置超时计时器辅助提醒 (不干扰业务，只是界面提示功能)
-    let lastDataTimeout = null;
-    function checkDataFreshness() {
-        const nowTime = Date.now();
-        // 更优雅做法，但只是辅助提示无数据时，不破坏主要逻辑。简单添加一个样式提醒
-        const tempTimeElem = document.getElementById('tempUpdateTime');
-        if (tempTimeElem && tempTimeElem.innerText === '--') {
-            // 连接成功超过12秒仍未收到任何数据，在传感器区域提醒
-            if (isMqttConnected) {
-                const extraHint = document.querySelector('.extra-detail');
-                if (extraHint && !extraHint.querySelector('.data-wait-hint')) {
-                    const hintSpan = document.createElement('div');
-                    hintSpan.className = 'data-wait-hint';
-                    hintSpan.style.fontSize = '0.7rem';
-                    hintSpan.style.marginTop = '6px';
-                    hintSpan.style.color = '#e6a157';
-                    hintSpan.innerHTML = '<i class="fas fa-hourglass-half"></i> 等待传感器数据... 请确保设备已上报';
-                    extraHint.appendChild(hintSpan);
-                }
-            }
-        } else {
-            const hints = document.querySelectorAll('.data-wait-hint');
-            hints.forEach(h => h.remove());
-        }
-    }
-    setInterval(checkDataFreshness, 8000);
 </script>
 </body>
 </html>

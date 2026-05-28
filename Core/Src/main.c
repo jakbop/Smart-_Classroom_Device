@@ -99,6 +99,8 @@ int main(void)
   MX_ADC1_Init();
   MX_I2C1_Init();
   MX_TIM2_Init();
+  MX_USART1_UART_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 	
 	//温湿度初始化
@@ -147,7 +149,8 @@ int main(void)
 		if(DHT11_Get(&temp1,&temp2,&humi) == 0){
 			//如果采集成功，就上传云端
 			sprintf(upload_data,"%s/sensor/Temp %.2f_%u\n",DEVICE_ID,temp1,humi);
-			HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);	
+			HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);	    //上传esp8266
+			HAL_UART_Transmit(&huart1,(uint8_t*)upload_data,strlen(upload_data),1000);    //上传QT软件	
 		}
 		
 		
@@ -166,7 +169,8 @@ int main(void)
 		
 		sprintf(upload_data,"%s/sensor/Light %u\n",DEVICE_ID,lightValue);
 		
-		HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);
+		HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);   //上传esp8266
+		HAL_UART_Transmit(&huart1,(uint8_t*)upload_data,strlen(upload_data),1000);   //上传qt软件
 		
 		//OLED显示光照
 		OLED_ShowString(0, 5, (u8*)"Light:     ", 12);
@@ -182,9 +186,10 @@ int main(void)
 		sprintf(upload_data,"%s/state/Led1 %u\n",DEVICE_ID, switch_state);
 		
 		HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);
+		HAL_UART_Transmit(&huart1,(uint8_t*)upload_data,strlen(upload_data),1000);   //上传qt软件
 		
 		//OLED显示LED1状态
-		OLED_ShowString(0, 6, (u8*)"LED1:", 12);
+		OLED_ShowString(0, 6, (u8*)"LED:", 12);
 		OLED_ShowString(48, 6, (u8*)(switch_state ? "ON " : "OFF"), 12);
 		
 		
@@ -192,14 +197,18 @@ int main(void)
 		////获取灯光设备2LED2的状态，并上传到云端
 		switch_state = HAL_GPIO_ReadPin(LED2_GPIO_Port,LED2_Pin);
 		
-		//sprintf(upload_data,"%s/state/Led2 %s\n",DEVICE_ID, switch_state ? "ON" : "OFF");
 		sprintf(upload_data,"%s/state/Led2 %u\n",DEVICE_ID, switch_state);
 		
 		HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);
 		
-		//OLED显示LED2状态
-		OLED_ShowString(0, 7, (u8*)"LED2:", 12);
-		OLED_ShowString(48, 7, (u8*)(switch_state ? "OFF" : "ON "), 12);
+		//OLED显示蜂鸣器状态
+		OLED_ShowString(0, 7, (u8*)"Buzz:", 12);
+		OLED_ShowString(48, 7, (u8*)(buzzer_state ? "ON " : "OFF"), 12);
+		
+		//获取蜂鸣器状态并上传
+		sprintf(upload_data,"%s/state/Buzzer %u\n",DEVICE_ID, buzzer_state);
+		HAL_UART_Transmit(&huart2,(uint8_t*)upload_data,strlen(upload_data),1000);
+		HAL_UART_Transmit(&huart1,(uint8_t*)upload_data,strlen(upload_data),1000);
 		
 		HAL_Delay(1000);
 		
