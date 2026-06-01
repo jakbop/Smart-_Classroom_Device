@@ -12,6 +12,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    this->setWindowFlags(Qt::Window | Qt::MSWindowsFixedSizeDialogHint);
+
     ui->btnLampOn->setEnabled(false);
     ui->btnBeep->setEnabled(false);
 
@@ -34,7 +36,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateSerialPort()
 {
-    // 遍历系统中所有有效串口
     static QStringList oldPortNames;
 
     QStringList newPortNames;
@@ -54,7 +55,11 @@ void MainWindow::updateSerialPort()
     for(auto& name : oldPortNames)
     {
         if(!newPortNames.contains(name))
-            ui->comboSerialPort->removeItem(ui->comboSerialPort->findText(name));
+        {
+            int idx = ui->comboSerialPort->findText(name);
+            if(idx >= 0)
+                ui->comboSerialPort->removeItem(idx);
+        }
     }
 
     oldPortNames = newPortNames;
@@ -66,59 +71,77 @@ void MainWindow::recvedData()
 
     buffer += sp.readAll();
 
-     // 将 buffer 中最后一个 \n 字符之前的部分作为完整的消息进行处理，剩余的部分继续保存在 buffer 中等待下一次接收
      int index;
-     while ((index = buffer.indexOf('\n')) != -1) // 查找 \n 字符的位置
+     while ((index = buffer.indexOf('\n')) != -1)
      {
-         QByteArray data = buffer.left(index); // 获取到完整的一帧数据就解析处理一次
+         QByteArray data = buffer.left(index);
 
          auto data2 = data.split(' ');
          auto topic = data2[0].split('/');
 
-         if(topic[1] == "sensor")
+         if(topic.size() >= 3 && topic[1] == "sensor")
          {
-             if(topic[2] == "Temp")
+             if(topic[2] == "Temp" && data2.size() >= 2)
              {
                 auto th = data2[1].split('_');
                 if(th.size() >= 2)
                 {
-                    ui->labelTemp->setText(QString("温度：") + th[0] + QString("°C"));
-                    ui->labelHumi->setText(QString("湿度：") + th[1] + QString("%"));
+                    ui->labelTemp->setText(th[0] + QString("°C"));
+                    ui->labelHumi->setText(th[1] + QString("%"));
                 }
              }
-             else if(topic[2] == "Light")
+             else if(topic[2] == "Light" && data2.size() >= 2)
              {
-                ui->labelLight->setText(QString("光照强度：") + data2[1]);
+                ui->labelLight->setText(data2[1]);
              }
          }
-         else if(topic[1] == "state")
+         else if(topic.size() >= 3 && topic[1] == "state")
          {
-             if(topic[2] == "Led1")
+             if(topic[2] == "Led1" && data2.size() >= 2)
              {
                 if(data2[1] == "0")
                 {
                     ui->btnLampOn->setText("开 灯");
+                    ui->btnLampOn->setStyleSheet(
+                        "QPushButton { background-color: #27ae60; color: white; border: none; border-radius: 8px; font-size: 22px; font-weight: bold; }"
+                        "QPushButton:hover { background-color: #2ecc71; }"
+                        "QPushButton:pressed { background-color: #1e8449; }"
+                    );
                 }
                 else
                 {
                     ui->btnLampOn->setText("关 灯");
+                    ui->btnLampOn->setStyleSheet(
+                        "QPushButton { background-color: #c0392b; color: white; border: none; border-radius: 8px; font-size: 22px; font-weight: bold; }"
+                        "QPushButton:hover { background-color: #e74c3c; }"
+                        "QPushButton:pressed { background-color: #a93226; }"
+                    );
                 }
              }
-             else if(topic[2] == "Buzzer")
+             else if(topic[2] == "Buzzer" && data2.size() >= 2)
              {
                 if(data2[1] == "0")
                 {
                     ui->btnBeep->setText("报 警");
+                    ui->btnBeep->setStyleSheet(
+                        "QPushButton { background-color: #e67e22; color: white; border: none; border-radius: 8px; font-size: 22px; font-weight: bold; }"
+                        "QPushButton:hover { background-color: #f39c12; }"
+                        "QPushButton:pressed { background-color: #d35400; }"
+                    );
                 }
                 else
                 {
                     ui->btnBeep->setText("静 音");
+                    ui->btnBeep->setStyleSheet(
+                        "QPushButton { background-color: #8e44ad; color: white; border: none; border-radius: 8px; font-size: 22px; font-weight: bold; }"
+                        "QPushButton:hover { background-color: #9b59b6; }"
+                        "QPushButton:pressed { background-color: #7d3c98; }"
+                    );
                 }
              }
          }
 
-
-         buffer = buffer.mid(index + 1); // 将剩余的部分保存在 buffer 中
+         buffer = buffer.mid(index + 1);
       }
 }
 
@@ -130,7 +153,12 @@ void MainWindow::on_btnOpenSerialPort_clicked()
         sp.close();
 
         ui->comboSerialPort->setEnabled(true);
-        ui->btnOpenSerialPort->setText("打 开");
+        ui->btnOpenSerialPort->setText("打开串口");
+        ui->btnOpenSerialPort->setStyleSheet(
+            "QPushButton { background-color: #3498db; color: white; border: none; border-radius: 5px; font-size: 18px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #2980b9; }"
+            "QPushButton:pressed { background-color: #2471a3; }"
+        );
         ui->btnLampOn->setEnabled(false);
         ui->btnBeep->setEnabled(false);
 
@@ -149,7 +177,12 @@ void MainWindow::on_btnOpenSerialPort_clicked()
     if(sp.open(QIODevice::ReadWrite))
     {
         ui->comboSerialPort->setEnabled(false);
-        ui->btnOpenSerialPort->setText("关 闭");
+        ui->btnOpenSerialPort->setText("关闭串口");
+        ui->btnOpenSerialPort->setStyleSheet(
+            "QPushButton { background-color: #e74c3c; color: white; border: none; border-radius: 5px; font-size: 18px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #c0392b; }"
+            "QPushButton:pressed { background-color: #a93226; }"
+        );
         ui->btnLampOn->setEnabled(true);
         ui->btnBeep->setEnabled(true);
     }
@@ -161,22 +194,27 @@ void MainWindow::on_btnOpenSerialPort_clicked()
 
 void MainWindow::on_btnLampOn_clicked()
 {
-//    uint8_t cmd[] = {0xA5, 0x5A, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 50, 0, 0xC3, 0x3C};
-//    sp.write((const char*)cmd, sizeof(cmd));
-
-    const char* cmd = nullptr;
+    const char* cmd = "b";
 
     if(ui->btnLampOn->text() == "开 灯")
     {
         cmd = "a";
-
         ui->btnLampOn->setText("关 灯");
+        ui->btnLampOn->setStyleSheet(
+            "QPushButton { background-color: #c0392b; color: white; border: none; border-radius: 8px; font-size: 22px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #e74c3c; }"
+            "QPushButton:pressed { background-color: #a93226; }"
+        );
     }
     else
     {
         cmd = "b";
-
         ui->btnLampOn->setText("开 灯");
+        ui->btnLampOn->setStyleSheet(
+            "QPushButton { background-color: #27ae60; color: white; border: none; border-radius: 8px; font-size: 22px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #2ecc71; }"
+            "QPushButton:pressed { background-color: #1e8449; }"
+        );
     }
 
     sp.write(cmd);
@@ -184,19 +222,27 @@ void MainWindow::on_btnLampOn_clicked()
 
 void MainWindow::on_btnBeep_clicked()
 {
-    const char* cmd = nullptr;
+    const char* cmd = "d";
 
     if(ui->btnBeep->text() == "报 警")
     {
         cmd = "c";
-
         ui->btnBeep->setText("静 音");
+        ui->btnBeep->setStyleSheet(
+            "QPushButton { background-color: #8e44ad; color: white; border: none; border-radius: 8px; font-size: 22px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #9b59b6; }"
+            "QPushButton:pressed { background-color: #7d3c98; }"
+        );
     }
     else
     {
         cmd = "d";
-
         ui->btnBeep->setText("报 警");
+        ui->btnBeep->setStyleSheet(
+            "QPushButton { background-color: #e67e22; color: white; border: none; border-radius: 8px; font-size: 22px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #f39c12; }"
+            "QPushButton:pressed { background-color: #d35400; }"
+        );
     }
 
     sp.write(cmd);
